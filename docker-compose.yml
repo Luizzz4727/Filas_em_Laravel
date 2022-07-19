@@ -1,0 +1,46 @@
+version: '3.7'
+
+services: 
+  db:
+    container_name: svc_db
+    image: mysql
+    restart: always
+    ports: 
+      - 3306:3306
+    env_file:
+      - ./.docker/config/db.env
+    volumes:
+      - ./db:/var/lib/mysql
+    networks:
+      - netsvc
+
+  app:
+    depends_on:
+      - db
+    container_name: svc_app
+    build:
+      context: ./.docker/dockerfile/
+      dockerfile: ./Dockerfile
+    image: 'laravelsvc'
+    ports:
+      - 8000:80
+    volumes:
+      - ./laravel/:/var/www/html
+    networks:
+      - netsvc
+  
+  phpmyadmin:
+    depends_on:
+        - db
+    container_name: svc_phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    env_file:
+      - ./.docker/config/phpmyadmin.env
+    ports:
+      - 8001:80
+    networks:
+      - netsvc
+
+networks:
+  netsvc:
