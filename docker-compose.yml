@@ -1,8 +1,8 @@
-version: '3.7'
+version: '3.8'
 
 services: 
   db:
-    container_name: svc_db
+    container_name: laravel_redis_db
     image: mysql
     restart: always
     ports: 
@@ -12,27 +12,38 @@ services:
     volumes:
       - ./db:/var/lib/mysql
     networks:
-      - netsvc
+      - net_laravel_redis
 
   app:
     depends_on:
       - db
-    container_name: svc_app
+    container_name: laravel_redis_app
     build:
       context: ./.docker/dockerfile/
       dockerfile: ./Dockerfile
-    image: 'laravelsvc'
+    image: 'laravel_redis'
     ports:
       - 8000:80
     volumes:
       - ./laravel/:/var/www/html
     networks:
-      - netsvc
-  
+      - net_laravel_redis
+    
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - 6379:6379
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    volumes: 
+      - ./redis:/data 
+
+# docker exec -it <CONTAINER_NAME_REDIS> redis-cli -a <PASSWORD>    
+
   phpmyadmin:
     depends_on:
         - db
-    container_name: svc_phpmyadmin
+    container_name: laravel_redis_phpmyadmin
     image: phpmyadmin/phpmyadmin:latest
     restart: always
     env_file:
@@ -40,7 +51,7 @@ services:
     ports:
       - 8001:80
     networks:
-      - netsvc
+      - net_laravel_redis
 
 networks:
-  netsvc:
+  net_laravel_redis:
