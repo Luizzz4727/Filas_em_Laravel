@@ -1,0 +1,59 @@
+version: '3.7'
+
+services: 
+  db:
+    container_name: laravel_rabbitmq_db
+    image: mysql
+    restart: always
+    ports: 
+      - 3306:3306
+    env_file:
+      - ./.docker/config/db.env
+    volumes:
+      - ./db:/var/lib/mysql
+    networks:
+      - net_laravel_rabbitmq
+
+  app:
+    depends_on:
+      - db
+    container_name: laravel_rabbitmq_app
+    build:
+      context: ./.docker/dockerfile/
+      dockerfile: ./Dockerfile
+    image: 'laravel_rabbitmq'
+    ports:
+      - 8000:80
+    volumes:
+      - ./laravel/:/var/www/html
+    networks:
+      - net_laravel_rabbitmq
+    
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ./dados:/var/lib/rabbitmq/
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=1234
+  
+  phpmyadmin:
+    depends_on:
+        - db
+    container_name: laravel_rabbitmq_phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    env_file:
+      - ./.docker/config/phpmyadmin.env
+    ports:
+      - 8001:80
+    networks:
+      - net_laravel_rabbitmq
+
+networks:
+  net_laravel_rabbitmq:
